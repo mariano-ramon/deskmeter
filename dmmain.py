@@ -18,7 +18,8 @@ desktops = ("Work",
             "Browse",
             "Write",
             "Learn",
-            "Idle")
+            "Idle",
+            "Self")
 
 
 unlabeled = "Other"
@@ -38,8 +39,6 @@ def desktop(workspace_index):
         return desktops[workspace_index]
     except IndexError:
         return unlabeled
-
-
 
 current_workspace = active_workspace()
 last_switch_time = now()

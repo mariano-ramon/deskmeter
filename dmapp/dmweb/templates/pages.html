@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block content  %}
+
+<table>
+	{%  for row in rows %}
+	<tr>
+			<td>{{ row["ws"] }}</td>
+			<td>{{ row["total"] }}</td>
+	</tr>
+{% endfor %}
+</table>
+
+
+
+{% endblock content %}
