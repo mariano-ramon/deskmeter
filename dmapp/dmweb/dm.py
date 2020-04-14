@@ -28,14 +28,7 @@ def index():
 
     rows = get_period_totals(start, end)
 
-    return pprint(rows)
-    #return render_template("pages.html", rows=rows)
-
-
-
-
-
-
+    return render_template("pages.html", rows=rows)
 
 
 @dmbp.route("/totals")
@@ -43,31 +36,6 @@ def totals():
     """
         Show total time used in each desktop for all time
     """
-
-    """
-    split times on selected period
-      cuantos segundos de diferencia desde el primer resultado al comienzo del periodo seleccionado
-      
-        TODO despues: calcular el delta del start al end y pedir recurrentemente esa franja para atras hasta que alguno de los registros supere la fecha/hora seleccionada
-                      tambien puede ser ir incrementando el tamaño del bloque anterior a pedir hasta lograrlo
-        
-                cual es el ultimo registro del periodo anterior
-
-        el delta es mayor a los segundos faltantes? 
-          SI? PEOLA
-          NO? Bu, bueno.
-            LO VEMOS DESPUES caso edge de no registrado
-      cuantos segundos faltan del final del periodo con el ultimo resultado
-          ME CHUPA UN GUEVO (por ahora) siempre es el start del ultimo
-          resultado hasta que termina el dia
-    """
-
-
-
-
-
-
-
 
     pipe =  [{'$group': {'_id':"$workspace",'totals': {'$sum': '$delta'}}},
              {'$sort':  { "_id": 1}}]
@@ -81,22 +49,49 @@ def totals():
     return render_template("pages.html", rows=rows)
 
 
-def get_period_totals(start,end):
+def get_period_totals(start, end):
 
-    bsas = pytz.timezone("Etc/GMT-3")
+  bsas = pytz.timezone("Etc/GMT+3")
+  local_start = start.replace(tzinfo=bsas)
+  local_end = end.replace(tzinfo=bsas)
 
-    lstart = start.replace(tzinfo=bsas)
-    lend = end.replace(tzinfo=bsas)
+  queries = {
+      "period" : {"date":{"$gt":local_start,"$lt":local_end}},
+      "previous_doc" : {"date":{"$lt":local_start}}
+      #"next_doc" : {"date":{"$lt":local_start}}
+  }
 
-    pipe =  [   {'$match': { 'date' : {"$gte": start, "$lt": end}} },
-                {'$group': { '_id':"$workspace",'totals': {'$sum': '$delta'}}},
-                {'$sort':  { "_id": 1}}]
+  length = switches.count_documents(queries["period"])
+  docs =  switches.find(queries["period"]).sort([("date", 1)])
+  previous_doc = switches.find_one(queries["previous_doc"])
+  #next_doc = switches.find_one(queries["next_doc"])
+  last_doc = docs[length-1]
 
-    rows = []    
-    for total in switches.aggregate(pipeline=pipe):
-        rows.append(total)
+  local_first_date = docs[0]["date"].replace(tzinfo=pytz.utc).astimezone(bsas)
+  local_last_date = last_doc["date"].replace(tzinfo=pytz.utc).astimezone(bsas)
 
-        # rows.append( {"ws"   : total["_id"], 
-        #               "total": str(datetime.timedelta(seconds=total["totals"]))})
+  delta_to_start = (local_first_date - local_start).total_seconds()
+  delta_to_end = (local_end - local_last_date).total_seconds()
 
-    return rows
+
+  pipe =  [   {'$match': queries["period"] },
+              {'$group': { '_id':"$workspace",'totals': {'$sum': '$delta'}}},
+              {'$sort':  { "_id": 1}}]
+
+  pre_rows = {}
+  for total in switches.aggregate(pipeline=pipe):
+      pre_rows[total["_id"]] = total["totals"]
+
+
+  if datetime.datetime.now().astimezone(bsas) < local_end:
+      delta_to_end = 0
+
+  pre_rows[previous_doc["workspace"]] += round(delta_to_start)
+  pre_rows[last_doc["workspace"]] += round(delta_to_end)
+
+  rows = []
+  for ws, delta in pre_rows.items():
+      rows.append( {"ws": ws,
+                    "total" : str(datetime.timedelta(seconds=delta))})
+
+  return rows
