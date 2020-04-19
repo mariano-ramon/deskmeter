@@ -8,9 +8,7 @@ client = MongoClient()
 db = client.deskmeter
 switches = db.switch
 
-
 dmbp = Blueprint("deskmeter", __name__, url_prefix="/", template_folder='templates')
-
 
 @dmbp.route("/")
 def index():
@@ -50,6 +48,11 @@ def totals():
 
 
 def get_period_totals(start, end):
+  """
+    TODOs: refactor to have available the ws array and the active ws function in order to remove
+    the delta = 0 thing
+    refactor to pass in the timezone and make the variable names clearer
+  """
 
   bsas = pytz.timezone("Etc/GMT+3")
   local_start = start.replace(tzinfo=bsas)
@@ -63,7 +66,7 @@ def get_period_totals(start, end):
 
   length = switches.count_documents(queries["period"])
   docs =  switches.find(queries["period"]).sort([("date", 1)])
-  previous_doc = switches.find_one(queries["previous_doc"])
+  previous_doc = switches.find(queries["previous_doc"]).sort([("date", -1)]).limit(1)[0]
   #next_doc = switches.find_one(queries["next_doc"])
   last_doc = docs[length-1]
 
@@ -82,9 +85,11 @@ def get_period_totals(start, end):
   for total in switches.aggregate(pipeline=pipe):
       pre_rows[total["_id"]] = total["totals"]
 
-
   if datetime.datetime.now().astimezone(bsas) < local_end:
       delta_to_end = 0
+
+  if previous_doc["workspace"] not in pre_rows:
+      pre_rows[previous_doc["workspace"]] = 0 
 
   pre_rows[previous_doc["workspace"]] += round(delta_to_start)
   pre_rows[last_doc["workspace"]] += round(delta_to_end)
