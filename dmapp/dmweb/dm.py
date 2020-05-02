@@ -29,6 +29,22 @@ def index():
     return render_template("pages.html", rows=rows)
 
 
+@dmbp.route("/period/<start>/<end>")
+def period(start,end):
+
+    start = datetime.datetime(*map(int, start.split("-"))).replace(hour=0,
+                                              minute=0,
+                                              second=0)
+
+    end = datetime.datetime(*map(int, end.split("-"))).replace (hour=23,
+                                             minute=59,
+                                             second=59)
+
+    rows = get_period_totals(start, end)
+
+    return render_template("pages.html", rows=rows)
+
+
 @dmbp.route("/totals")
 def totals():
     """
