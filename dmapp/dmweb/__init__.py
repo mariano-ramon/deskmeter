@@ -1,16 +1,9 @@
-import os
-
 from flask import Flask
 from dmweb import dm
 
-def create_app(test_config=None):
+def create_app():
 
-    app = Flask("deskmeter") #instance_relative_config=True
-
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+    app = Flask("deskmeter") 
 
     app.register_blueprint(dm.dmbp)
 
