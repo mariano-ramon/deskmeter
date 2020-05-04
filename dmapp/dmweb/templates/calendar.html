@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block head  %}
+
+
+<style type="text/css">
+table {
+	width: 100%;
+	border: 1px solid black;
+} 	
+
+</style>
+
+{% endblock head %}
+
+
+{% block content  %}
+
+	{{ content | safe }}
+
+{% endblock content %}

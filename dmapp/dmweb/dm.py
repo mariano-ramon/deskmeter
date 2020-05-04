@@ -50,7 +50,6 @@ def oneday(month,day):
 
 
 
-
 @dmbp.route("/period/<start>/<end>")
 def period(start,end):
 
@@ -102,6 +101,8 @@ def get_period_totals(start, end):
     length = switches.count_documents(queries["period"])
     docs =  switches.find(queries["period"]).sort([("date", 1)])
     
+    if not length:
+        return [{"ws": "No Data", "total": ""}]
     #next_doc = switches.find_one(queries["next_doc"])
     last_doc = docs[length-1]
 
@@ -116,42 +117,47 @@ def get_period_totals(start, end):
     for total in switches.aggregate(pipeline=pipe):
         pre_rows[total["_id"]] = total["totals"]
 
-
-
     time_corrections = []
     if first_date > start:
-        previous_doc = switches.find(queries["previous_doc"]).sort([("date", -1)]).limit(1)[0]
-        time_corrections.append(Counter({previous_doc["workspace"] : split_entry(previous_doc, start)}))
+        #TODO if its the first record it fails write test
+        try:
+            previous_doc = switches.find(queries["previous_doc"]).sort([("date", -1)]).limit(1)[0]
+            time_corrections.append(Counter({previous_doc["workspace"] : split_entry(previous_doc, start)}))
+        except IndexError:
+            pass
+        
+        
     
     now = local_date(datetime.datetime.now())
 
     if end > now:
-        time_corrections.append( Counter({ last_doc["workspace"] : split_entry(last_doc, now, after=False)}))
+        time_corrections.append(Counter({ last_doc["workspace"] : split_entry(last_doc, now, after=False)}))
 
     if end > last_date and now > end:
         time_corrections.append(Counter({ last_doc["workspace"] : split_entry(last_doc, end, after=False)}))
 
-
     for correction in time_corrections:
         pre_rows += correction
 
-    day = 0
+    #TODO _1 remove
+    #day = 0
     rows = []
     for ws, total in pre_rows.items():
-        day += total
+        #TODO _1 remove
+        #day += total
         rows.append( {"ws": ws,
                       "total" : datetime.timedelta(seconds=total)})
 
-
-    rows.append({"ws":"sum","total": day})
+    #TODO _1 remove
+    #rows.append({"ws":"sum","total": day})
     return rows
 
 
 def split_entry(entry, split_time, after=True):
     """
         entry must have a date an number
-        split time must be timezone aware
-        after, bolean to return the time after the split time
+        split_time must be timezone aware
+        after bolean to return the time after the split time
     """
     first_half = round((split_time - local_date(entry["date"], True)).total_seconds())
     last_half = entry["delta"] - first_half
