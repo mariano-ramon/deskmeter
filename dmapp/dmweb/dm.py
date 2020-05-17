@@ -146,7 +146,7 @@ def get_period_totals(start, end):
         #TODO _1 remove
         #day += total
         rows.append( {"ws": ws,
-                      "total" : datetime.timedelta(seconds=total)})
+                      "total" : convert_timedelta(datetime.timedelta(seconds=total)) })
 
     #TODO _1 remove
     #rows.append({"ws":"sum","total": day})
@@ -172,3 +172,11 @@ def local_date(date, convert=False):
     if convert:
         return pytz.utc.localize(date, is_dst=None).astimezone(bsas)
     return date.replace(tzinfo=bsas)
+
+
+def convert_timedelta(duration):
+    days, seconds = duration.days, duration.seconds
+    hours = days * 24 + seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = (seconds % 60)
+    return "{}:{:02d}:{:02d}".format(hours, minutes, seconds)

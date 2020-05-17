@@ -17,12 +17,13 @@ dailies = db.daily
 desktops = ("Work",
             "Browse",
             "Write",
+            "Create",
             "Learn",
-            "Idle",
-            "Self")
+            "Other",
+            "Sleep")
 
 
-unlabeled = "Other"
+unlabeled = "Idle"
 
 def active_workspace():
 
