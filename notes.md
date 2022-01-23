@@ -1,1 +1,2 @@
-check weird thing of not showing the desktop where you start the dmmain script unless you move the window around
+check weird thing of not showing the workspace where you start the dmmain script unless you move the window around
+solve the bug of falsely counting the workspace you are on, because it counts from the last switch (once you switch it shows correctly)
