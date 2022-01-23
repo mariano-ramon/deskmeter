@@ -15,12 +15,12 @@ switches = db.switch
 dailies = db.daily
 
 desktops = ("Work",
-            "Browse",
-            "Write",
+            "Work",
             "Create",
-            "Learn",
             "Other",
-            "Sleep")
+            "Learn",
+            "Challenges",
+            "Idle")
 
 
 unlabeled = "Idle"

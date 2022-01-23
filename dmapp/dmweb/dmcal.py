@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from pprint import pprint
 from flask import Blueprint, render_template
 import pytz
@@ -21,13 +21,17 @@ class DMHTMLCalendar(calendar.HTMLCalendar):
     def setcalmonth(self, month):
         self.dmmonth = month
 
+    def setcalyear(self, year):
+        self.dmyear = year
+
     def oneday(self,month,day):
 
-        start = datetime.datetime(2020, month, day).replace(hour=0,
+        current_year = datetime.today().year
+        start = datetime(self.dmyear, month, day).replace(hour=0,
                                                   minute=0,
                                                   second=0)
 
-        end = datetime.datetime(2020, month, day).replace (hour=23,
+        end = datetime(self.dmyear, month, day).replace (hour=23,
                                                  minute=59,
                                                  second=59)
 
@@ -63,11 +67,11 @@ class DMHTMLCalendar(calendar.HTMLCalendar):
                 break
 
 
-        start = datetime.datetime(2020, month, start_day).replace(hour=0,
+        start = datetime(self.dmyear, month, start_day).replace(hour=0,
                                                   minute=0,
                                                   second=0)
 
-        end = datetime.datetime(2020, month, end_day).replace (hour=23,
+        end = datetime(self.dmyear, month, end_day).replace (hour=23,
                                                  minute=59,
                                                  second=59)
 
@@ -80,18 +84,6 @@ class DMHTMLCalendar(calendar.HTMLCalendar):
 
         returnstr += "</table>"
         return returnstr 
-
-
-    # def formatmonthname(self, theyear, themonth, withyear=True):
-    #     """
-    #     Return a month name as a table row.
-    #     """
-    #     if withyear:
-    #         s = '%s %s' % (month_name[themonth], theyear)
-    #     else:
-    #         s = '%s' % month_name[themonth]
-    #     return '<tr><th colspan="8" class="%s">%s</th></tr>' % (
-    #         self.cssclass_month_head, s)
 
 
     def formatweekheader(self):
@@ -128,13 +120,15 @@ class DMHTMLCalendar(calendar.HTMLCalendar):
 @dmbp.route("/calendar/<int:month>")
 def calmain(month=None):
 
-    usemonth = datetime.datetime.today().month
+    usemonth = datetime.today().month
+    useyear = datetime.today().year
     if month:
         usemonth = month
-    
+
     cal = DMHTMLCalendar(calendar.SATURDAY)
 
     cal.setcalmonth(usemonth)
+    cal.setcalyear(useyear)
         
-    return render_template("calendar.html", content=cal.formatmonth(2020,usemonth))
+    return render_template("calendar.html", content=cal.formatmonth(useyear,usemonth))
 

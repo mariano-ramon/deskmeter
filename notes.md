@@ -1,0 +1,1 @@
+check weird thing of not showing the desktop where you start the dmmain script unless you move the window around
